@@ -509,7 +509,7 @@ func NewTestServer(opts ...TestServerOpt) (TestServer, error) {
 		return nil, fmt.Errorf("%s failed to parse version: %w", testserverMessagePrefix, err)
 	}
 
-	startCmd := "start-single-node"
+	startCmd := "demo"
 	if !v.AtLeast(version.MustParse("v19.2.0-alpha")) || serverArgs.numNodes > 1 {
 		startCmd = "start"
 	}
