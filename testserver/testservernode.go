@@ -46,6 +46,7 @@ func (ts *testServerImpl) StartNode(i int) error {
 		return fmt.Errorf("node %d already running", i)
 	}
 	ts.mu.RUnlock()
+
 	ts.nodes[i].startCmd = exec.Command(ts.nodes[i].startCmdArgs[0], ts.nodes[i].startCmdArgs[1:]...)
 
 	currCmd := ts.nodes[i].startCmd
@@ -80,6 +81,14 @@ func (ts *testServerImpl) StartNode(i int) error {
 
 	for k, v := range defaultEnv() {
 		currCmd.Env = append(currCmd.Env, k+"="+v)
+	}
+
+	if ts.demoMode {
+		// keep stdin open so the demo server stays up until we kill the process
+		_, err := currCmd.StdinPipe()
+		if err != nil {
+			return fmt.Errorf("error in StdinPipe: %w", err)
+		}
 	}
 
 	log.Printf("executing: %s", currCmd)

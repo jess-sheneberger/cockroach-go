@@ -155,6 +155,7 @@ type testServerImpl struct {
 	initCmd     *exec.Cmd
 	initCmdArgs []string
 	nodes       []nodeInfo
+	demoMode    bool
 
 	// curTenantID is used to allocate tenant IDs. Refer to NewTenantServer for
 	// more information.
@@ -235,6 +236,7 @@ type testServerArgs struct {
 	initTimeoutSeconds          int
 	pollListenURLTimeoutSeconds int
 	envVars                     []string // to be passed to cmd.Env
+	demoMode                    bool
 }
 
 // CockroachBinaryPathOpt is a TestServer option that can be passed to
@@ -379,6 +381,12 @@ func EnvVarOpt(vars []string) TestServerOpt {
 	}
 }
 
+func DemoModeOpt() TestServerOpt {
+	return func(args *testServerArgs) {
+		args.demoMode = true
+	}
+}
+
 const (
 	logsDirName  = "logs"
 	certsDirName = "certs"
@@ -509,9 +517,12 @@ func NewTestServer(opts ...TestServerOpt) (TestServer, error) {
 		return nil, fmt.Errorf("%s failed to parse version: %w", testserverMessagePrefix, err)
 	}
 
-	startCmd := "demo"
+	startCmd := "start-single-node"
 	if !v.AtLeast(version.MustParse("v19.2.0-alpha")) || serverArgs.numNodes > 1 {
 		startCmd = "start"
+	}
+	if serverArgs.demoMode {
+		startCmd = "demo"
 	}
 
 	nodes := make([]nodeInfo, serverArgs.numNodes)
@@ -569,6 +580,13 @@ func NewTestServer(opts ...TestServerOpt) (TestServer, error) {
 				"--listening-url-file=" + nodes[i].listeningURLFile,
 				"--external-io-dir=" + serverArgs.externalIODir,
 			}
+
+			if serverArgs.demoMode {
+				nodes[0].startCmdArgs = append(nodes[0].startCmdArgs, "--no-example-database")
+			} else {
+				nodes[0].startCmdArgs = append(nodes[0].startCmdArgs, storeArg)
+			}
+
 		}
 	}
 
@@ -594,6 +612,7 @@ func NewTestServer(opts ...TestServerOpt) (TestServer, error) {
 		initCmdArgs: initArgs,
 		curTenantID: firstTenantID,
 		nodes:       nodes,
+		demoMode:    serverArgs.demoMode,
 	}
 	ts.pgURL = make([]pgURLChan, serverArgs.numNodes)
 
