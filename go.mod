@@ -1,4 +1,4 @@
-module github.com/cockroachdb/cockroach-go/v2
+module gitlab.com/0xmohit/cockroach-go/v2
 
 go 1.13
 

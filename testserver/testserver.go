@@ -582,6 +582,14 @@ func NewTestServer(opts ...TestServerOpt) (TestServer, error) {
 			}
 
 			if serverArgs.demoMode {
+				nodes[0].startCmdArgs = []string{
+					serverArgs.cockroachBinary,
+					startCmd,
+					"--logtostderr",
+					secureOpt,
+					"--http-port=" + strconv.Itoa(serverArgs.httpPorts[0]),
+					"--listening-url-file=" + nodes[i].listeningURLFile,
+				}
 				nodes[0].startCmdArgs = append(nodes[0].startCmdArgs, "--no-example-database")
 			} else {
 				nodes[0].startCmdArgs = append(nodes[0].startCmdArgs, storeArg)
