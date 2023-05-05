@@ -17,6 +17,7 @@ package testserver
 import (
 	"fmt"
 	"log"
+	"os"
 	"os/exec"
 	"strings"
 )
@@ -89,6 +90,11 @@ func (ts *testServerImpl) StartNode(i int) error {
 		if err != nil {
 			return fmt.Errorf("error in StdinPipe: %w", err)
 		}
+
+	}
+
+	if ts.passThroughStderr {
+		currCmd.Stderr = os.Stdout
 	}
 
 	log.Printf("executing: %s", currCmd)

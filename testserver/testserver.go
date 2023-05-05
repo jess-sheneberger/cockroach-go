@@ -157,6 +157,8 @@ type testServerImpl struct {
 	nodes       []nodeInfo
 	demoMode    bool
 
+	passThroughStderr bool
+
 	// curTenantID is used to allocate tenant IDs. Refer to NewTenantServer for
 	// more information.
 	curTenantID  int
@@ -237,6 +239,7 @@ type testServerArgs struct {
 	pollListenURLTimeoutSeconds int
 	envVars                     []string // to be passed to cmd.Env
 	demoMode                    bool
+	passThroughStderr           bool
 }
 
 // CockroachBinaryPathOpt is a TestServer option that can be passed to
@@ -384,6 +387,12 @@ func EnvVarOpt(vars []string) TestServerOpt {
 func DemoModeOpt() TestServerOpt {
 	return func(args *testServerArgs) {
 		args.demoMode = true
+	}
+}
+
+func PassThroughStderrOpt() TestServerOpt {
+	return func(args *testServerArgs) {
+		args.passThroughStderr = true
 	}
 }
 
@@ -552,6 +561,7 @@ func NewTestServer(opts ...TestServerOpt) (TestServer, error) {
 		// https://github.com/cockroachdb/cockroach-go/issues/109
 		nodes[i].stdout = filepath.Join(nodeBaseDir, "cockroach.stdout")
 		nodes[i].stderr = filepath.Join(nodeBaseDir, "cockroach.stderr")
+
 		nodes[i].listeningURLFile = filepath.Join(nodeBaseDir, "listen-url")
 		nodes[i].state = stateNew
 		if serverArgs.numNodes > 1 {
@@ -594,7 +604,6 @@ func NewTestServer(opts ...TestServerOpt) (TestServer, error) {
 			} else {
 				nodes[0].startCmdArgs = append(nodes[0].startCmdArgs, storeArg)
 			}
-
 		}
 	}
 
@@ -621,6 +630,8 @@ func NewTestServer(opts ...TestServerOpt) (TestServer, error) {
 		curTenantID: firstTenantID,
 		nodes:       nodes,
 		demoMode:    serverArgs.demoMode,
+
+		passThroughStderr: serverArgs.passThroughStderr,
 	}
 	ts.pgURL = make([]pgURLChan, serverArgs.numNodes)
 
